@@ -108,7 +108,7 @@ func (u *Updater) BackgroundRun() error {
 		//return
 		//}
 		// TODO(bgentry): logger isn't on Windows. Replace w/ proper error reports.
-		if err := u.update(); err != nil {
+		if _, err := u.Update(); err != nil {
 			return err
 		}
 	}
@@ -124,23 +124,23 @@ func (u *Updater) wantUpdate() bool {
 	return writeTime(path, time.Now().Add(wait))
 }
 
-func (u *Updater) update() error {
+func (u *Updater) Update() (updated bool, err error) {
 	path, err := osext.Executable()
 	if err != nil {
-		return err
+		return false, err
 	}
 	old, err := os.Open(path)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer old.Close()
 
 	err = u.fetchInfo()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if u.Info.Version == u.CurrentVersion {
-		return nil
+		return false, nil
 	}
 	bin, err := u.fetchAndVerifyPatch(old)
 	if err != nil {
@@ -159,7 +159,7 @@ func (u *Updater) update() error {
 			} else {
 				log.Println("update: fetching full binary,", err)
 			}
-			return err
+			return false, err
 		}
 	}
 
@@ -169,12 +169,9 @@ func (u *Updater) update() error {
 
 	err, errRecover := up.FromStream(bytes.NewBuffer(bin))
 	if errRecover != nil {
-		return fmt.Errorf("update and recovery errors: %q %q", err, errRecover)
+		return false, fmt.Errorf("update and recovery errors: %q %q", err, errRecover)
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err == nil, err
 }
 
 func (u *Updater) fetchInfo() error {
