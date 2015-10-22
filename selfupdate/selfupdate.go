@@ -70,18 +70,20 @@ var defaultHTTPRequester = HTTPRequester{}
 //  	DiffURL:        "http://updates.yourdomain.com/",
 //  	Dir:            "update/",
 //  	CmdName:        "myapp", // app name
+//  	Period:          24*time.Hour,
 //  }
 //  if updater != nil {
 //  	go updater.BackgroundRun()
 //  }
 type Updater struct {
-	CurrentVersion string    // Currently running version.
-	ApiURL         string    // Base URL for API requests (json files).
-	CmdName        string    // Command name is appended to the ApiURL like http://apiurl/CmdName/. This represents one binary.
-	BinURL         string    // Base URL for full binary downloads.
-	DiffURL        string    // Base URL for diff downloads.
-	Dir            string    // Directory to store selfupdate state.
-	Requester      Requester //Optional parameter to override existing http request handler
+	CurrentVersion string        // Currently running version.
+	ApiURL         string        // Base URL for API requests (json files).
+	CmdName        string        // Command name is appended to the ApiURL like http://apiurl/CmdName/. This represents one binary.
+	BinURL         string        // Base URL for full binary downloads.
+	DiffURL        string        // Base URL for diff downloads.
+	Dir            string        // Directory to store selfupdate state.
+	Requester      Requester     //Optional parameter to override existing http request handler
+	Period         time.Duration // Time between checks for updates
 	Info           struct {
 		Version string
 		Sha256  []byte
@@ -120,7 +122,11 @@ func (u *Updater) wantUpdate() bool {
 	if u.CurrentVersion == "dev" || readTime(path).After(time.Now()) {
 		return false
 	}
-	wait := 24*time.Hour + randDuration(24*time.Hour)
+	period := u.Period
+	if period == 0 {
+		period = 24 * time.Hour
+	}
+	wait := period + randDuration(period)
 	return writeTime(path, time.Now().Add(wait))
 }
 
