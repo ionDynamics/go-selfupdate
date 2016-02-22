@@ -34,7 +34,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -43,6 +42,7 @@ import (
 
 	"github.com/kardianos/osext"
 	"github.com/kr/binarydist"
+	idl "go.iondynamics.net/iDlogger"
 	"gopkg.in/inconshreveable/go-update.v0"
 )
 
@@ -145,19 +145,19 @@ func (u *Updater) Update() (updated bool, err error) {
 	bin, err := u.fetchAndVerifyPatch(old)
 	if err != nil {
 		if err == ErrHashMismatch {
-			log.Println("update: hash mismatch from patched binary")
+			idl.Err("update: hash mismatch from patched binary")
 		} else {
 			if u.DiffURL != "" {
-				log.Println("update: patching binary,", err)
+				idl.Err("update: patching binary,", err)
 			}
 		}
 
 		bin, err = u.fetchAndVerifyFullBin()
 		if err != nil {
 			if err == ErrHashMismatch {
-				log.Println("update: hash mismatch from full binary")
+				idl.Err("update: hash mismatch from full binary")
 			} else {
-				log.Println("update: fetching full binary,", err)
+				idl.Err("update: fetching full binary,", err)
 			}
 			return false, err
 		}
