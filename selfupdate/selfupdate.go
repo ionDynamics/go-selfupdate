@@ -104,12 +104,6 @@ func (u *Updater) BackgroundRun() error {
 			// fail
 			return err
 		}
-		//self, err := osext.Executable()
-		//if err != nil {
-		// fail update, couldn't figure out path to self
-		//return
-		//}
-		// TODO(bgentry): logger isn't on Windows. Replace w/ proper error reports.
 		if _, err := u.Update(); err != nil {
 			return err
 		}
