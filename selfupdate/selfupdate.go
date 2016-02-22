@@ -40,6 +40,7 @@ import (
 	"runtime"
 	"time"
 
+	semver "github.com/hashicorp/go-version"
 	"github.com/kardianos/osext"
 	"github.com/kr/binarydist"
 	idl "go.iondynamics.net/iDlogger"
@@ -139,7 +140,7 @@ func (u *Updater) Update() (updated bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	if u.Info.Version == u.CurrentVersion {
+	if u.Info.Version == u.CurrentVersion || needUpdate(u.Info.Version, u.CurrentVersion) {
 		return false, nil
 	}
 	bin, err := u.fetchAndVerifyPatch(old)
@@ -287,4 +288,18 @@ func verifySha(bin []byte, sha []byte) bool {
 
 func writeTime(path string, t time.Time) bool {
 	return ioutil.WriteFile(path, []byte(t.Format(time.RFC3339)), 0644) == nil
+}
+
+func needUpdate(latest, current string) bool {
+	constraint, err := semver.NewConstraint("> " + current)
+	if err != nil {
+		return false
+	}
+
+	l, err := version.NewVersion(latest)
+	if err != nil {
+		return false
+	}
+
+	return constraint.Check(l)
 }
