@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 
 	"github.com/kr/binarydist"
 )
@@ -172,9 +173,15 @@ func main() {
 	if fi.IsDir() {
 		files, err := ioutil.ReadDir(appPath)
 		if err == nil {
+			wg := sync.WaitGroup{}
 			for _, file := range files {
-				createUpdate(filepath.Join(appPath, file.Name()), file.Name())
+				wg.Add(1)
+				go func(str1, str2 string) {
+					createUpdate(str1, str2)
+					wg.Done()
+				}(filepath.Join(appPath, file.Name()), file.Name())
 			}
+			wg.Wait()
 			os.Exit(0)
 		}
 	}
